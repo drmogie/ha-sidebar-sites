@@ -27,9 +27,10 @@ Each site gets its own sidebar item.
 1. Settings, Add-ons, Add-on Store, three dots, Repositories.
 2. Add `https://github.com/drmogie/ha-sidebar-sites`.
 3. Install Sidebar Proxy.
-4. In Configuration, add the site and pick a free port.
+4. In Configuration, add the site (name and address).
 5. Start the add-on.
-6. In Sidebar Sites, use `http://YOUR-HA-ADDRESS:PORT` as the address.
+6. Site 1 is on port 8101, site 2 on 8102, and so on.
+7. In Sidebar Sites, use `http://YOUR-HA-ADDRESS:8101` as the address.
 
 See [sidebar_proxy/DOCS.md](sidebar_proxy/DOCS.md) for details.
 

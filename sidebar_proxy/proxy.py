@@ -1,7 +1,7 @@
 """Sidebar Proxy: a small reverse proxy that lets any website load inside
 a Home Assistant sidebar page (an iframe).
 
-Each configured site gets its own port. The site is served from the root
+Each configured site gets its own port (8101, 8102, and so on, in order). The site is served from the root
 of that port, so absolute paths on the site keep working. The proxy removes
 the headers that stop a page from loading inside a frame.
 """
@@ -15,9 +15,11 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.02.01"
+VERSION = "2026.10.02.02"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
+FIRST_PORT = 8101
+MAX_SITES = 10
 
 LOG = logging.getLogger("sidebar_proxy")
 
@@ -59,9 +61,9 @@ def fix_cookie(value: str) -> str:
 
 
 class Site:
-    def __init__(self, conf: dict):
+    def __init__(self, conf: dict, index: int):
         self.name = conf["name"]
-        self.port = int(conf["port"])
+        self.port = FIRST_PORT + index
         self.target = conf["url"].rstrip("/")
         parts = urlsplit(self.target)
         self.origin = f"{parts.scheme}://{parts.netloc}"
@@ -245,7 +247,10 @@ def load_sites() -> list[Site]:
             options = json.load(fh)
     except FileNotFoundError:
         options = {}
-    return [Site(item) for item in options.get("sites", [])]
+    items = options.get("sites", [])
+    if len(items) > MAX_SITES:
+        LOG.warning("Only the first %d sites are used", MAX_SITES)
+    return [Site(item, i) for i, item in enumerate(items[:MAX_SITES])]
 
 
 async def main() -> None:
