@@ -41,3 +41,10 @@ Every site is its own entry, with its own Configure and Delete.
 
 - Some sites (banks, Google sign-in) block frames on purpose and may still fail.
 - This is early. Test on a test server first.
+
+## Home networks and certificates
+
+- Sites on a home network address skip the certificate check by default.
+- Add more ranges with the home_networks option, for example `10.50.0.0/16`.
+- Set verify_ssl on a site to force the check on or off.
+- If a site cannot be reached, the tab shows a clear error page with a hint.

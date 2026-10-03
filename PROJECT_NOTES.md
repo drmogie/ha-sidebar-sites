@@ -38,3 +38,9 @@
 - Test flow: ha-pi4 first. Arc HA (arc-ha.d-a-d-s.dev) is the live test server. ha-blue untouched.
 - Gotchas: Pi builds take about 5 minutes (tool calls time out, poll instead). Add-on may show error after update, press Start.
 - Never write a file with open(p,"w") before reading it (this emptied config.yaml once, fixed in .03.04).
+
+## 2026.10.03.08
+
+- SHIM: forms with no action get one set to the proxy path (fixes OPNsense white page after login).
+- verify_ssl is auto when unset: off for home hosts (is_home_host + HOME_NETS), on otherwise. home_networks option adds ranges.
+- error_page() gives a styled 502. Session has sock_connect=10.

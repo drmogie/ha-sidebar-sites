@@ -25,7 +25,17 @@ You do not need the Sidebar Sites integration. You do not need NPM hosts, domain
 
 - name: the tab name. It also makes the id.
 - url: the real website
-- verify_ssl: turn off for self-signed certificates
+- verify_ssl: leave empty for auto. Set true or false to force it.
+- home_networks: extra address ranges to treat as home. Separate with commas or spaces. Example: 10.50.0.0/16, 203.0.113.0/24
+
+## Certificates on home networks
+
+- Home addresses skip the certificate check by default. Self-signed certificates just work.
+- Built in: 10.x.x.x, 172.16 to 172.31, 192.168.x.x, 169.254.x.x, 127.x.x.x, 100.64 to 100.127.
+- Also built in: names with no dot (like router) and names ending in .local, .lan, .home, .home.arpa, .internal.
+- Add your own ranges in home_networks.
+- Sites on the internet still get a full certificate check.
+- The trade off: on a home address the proxy does not prove who is answering. This is fine on a network you trust.
 
 ## URL examples
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026.10.03.08
+
+- Fix: login pages whose form has no address (like OPNsense) no longer end on a white page.
+- Home network sites skip the certificate check by default. Built in: 10.x, 172.16 to 172.31, 192.168.x, 169.254.x, 127.x, 100.64 to 100.127, and local names.
+- New option home_networks: add more address ranges, for example 203.0.113.0/24.
+- verify_ssl set to true or false on a site still wins.
+- A clear error page now shows when a site cannot be reached, with a hint on what to fix.
+- Unreachable sites fail after 10 seconds.
+
 ## 2026.10.03.07
 
 - Add-on only: one sidebar item with a tab for each site. No integration needed.

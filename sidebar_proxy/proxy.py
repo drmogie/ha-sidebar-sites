@@ -13,6 +13,7 @@ The older site number (/s/1/) still works as an id.
 """
 import asyncio
 import html
+import ipaddress
 import json
 import logging
 import re
@@ -22,7 +23,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.07"
+VERSION = "2026.10.03.08"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -72,6 +73,77 @@ def fix_cookie(value: str, prefix: str | None = None) -> str:
     return ";".join(out)
 
 
+# Addresses on a home network. HTTPS sites there almost always use a certificate
+# the proxy cannot check (self-signed, or made for a name instead of the IP).
+DEFAULT_HOME_NETS = [
+    "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16",
+    "127.0.0.0/8", "100.64.0.0/10", "fc00::/7", "fe80::/10", "::1/128",
+]
+LOCAL_SUFFIXES = (".local", ".lan", ".home", ".home.arpa", ".internal")
+HOME_NETS: list = []
+
+
+def parse_networks(items) -> list:
+    nets = []
+    for raw in items:
+        raw = str(raw).strip()
+        if not raw:
+            continue
+        try:
+            nets.append(ipaddress.ip_network(raw, strict=False))
+        except ValueError:
+            LOG.warning("Ignoring home network %r: not an address range", raw)
+    return nets
+
+
+def is_home_host(host: str) -> bool:
+    host = (host or "").strip("[]").lower()
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        # a plain name like "router", or a local-style name like nas.local
+        return "." not in host or host.endswith(LOCAL_SUFFIXES)
+    return any(ip in net for net in HOME_NETS if net.version == ip.version)
+
+
+def error_page(site, err) -> web.Response:
+    """A readable page for when the proxy cannot reach a site."""
+    text = str(err)
+    low = text.lower()
+    if "certificate" in low or "ssl" in low:
+        why = "The site's security certificate was not trusted."
+        todo = ("Set verify_ssl to false for this site in the add-on settings, "
+                "or add its address range to home_networks. Then restart the add-on.")
+    elif "refused" in low:
+        why = "The site refused the connection."
+        todo = "Check that the site is running and that the port in the address is right."
+    elif isinstance(err, asyncio.TimeoutError) or "timed out" in low or "timeout" in low:
+        why = "The site did not answer in time."
+        todo = "Check the address, that the device is on, and that nothing blocks Home Assistant."
+    elif ("name or service" in low or "getaddrinfo" in low or "name resolution" in low
+          or "nodename" in low):
+        why = "The site's name could not be found."
+        todo = "Check the spelling, or use the IP address instead."
+    else:
+        why = "The proxy could not connect to the site."
+        todo = "Check the address in the add-on settings."
+    page = (
+        "<!doctype html><meta charset=utf-8>"
+        "<meta name=viewport content='width=device-width,initial-scale=1'>"
+        "<style>:root{color-scheme:light dark}"
+        "body{font-family:Roboto,system-ui,sans-serif;margin:0;padding:28px;line-height:1.6}"
+        "h2{margin:0 0 8px}code{background:rgba(127,127,127,.2);padding:1px 6px;border-radius:4px}"
+        "pre{white-space:pre-wrap;background:rgba(127,127,127,.15);padding:10px;border-radius:6px;font-size:.85em}"
+        "</style>"
+        f"<h2>Cannot open {html.escape(site.name)}</h2>"
+        f"<p><b>{html.escape(why)}</b></p>"
+        f"<p>{html.escape(todo)}</p>"
+        f"<p>Address: <code>{html.escape(site.target)}</code></p>"
+        f"<pre>{html.escape(text)}</pre>"
+    )
+    return web.Response(status=502, text=page, content_type="text/html")
+
+
 def make_id(name: str) -> str:
     """Site name -> id: dashes instead of spaces, only safe characters."""
     sid = re.sub(r"\s+", "-", name.strip())
@@ -91,7 +163,15 @@ class Site:
         self.origin = f"{parts.scheme}://{parts.netloc}"
         self.host = parts.netloc
         self.base_path = parts.path.rstrip("/")
-        self.verify_ssl = conf.get("verify_ssl", True)
+        explicit = conf.get("verify_ssl")
+        if isinstance(explicit, bool):
+            self.verify_ssl = explicit
+            self.verify_note = "certificate check on" if explicit else "certificate check off"
+        else:  # not set: check certificates, except for home network addresses
+            home = is_home_host(parts.hostname or "")
+            self.verify_ssl = not home
+            self.verify_note = ("certificate check off (home network address)"
+                                if home else "certificate check on")
 
     def ssl_arg(self):
         if self.origin.startswith("https") and not self.verify_ssl:
@@ -252,6 +332,17 @@ SHIM = r"""
     window.EventSource = function (u, c) { return new E(fix(String(u)), c); };
     window.EventSource.prototype = E.prototype;
   }
+  // A form with no action posts to the page address, which the shim moved.
+  function fixForm(f) {
+    try {
+      if (f && f.tagName === "FORM" && !f.hasAttribute("action")) {
+        f.setAttribute("action", fix(location.pathname) + location.search);
+      }
+    } catch (e) {}
+  }
+  document.addEventListener("submit", function (e) { fixForm(e.target); }, true);
+  var fsub = HTMLFormElement.prototype.submit;
+  HTMLFormElement.prototype.submit = function () { fixForm(this); return fsub.apply(this, arguments); };
   var attrs = { src: 1, href: 1, action: 1, poster: 1 };
   var sa = Element.prototype.setAttribute;
   Element.prototype.setAttribute = function (n, v) {
@@ -390,10 +481,7 @@ async def proxy_request(
         )
     except Exception as err:  # noqa: BLE001
         LOG.warning("[%s] request failed: %s", site.name, err)
-        return web.Response(
-            status=502,
-            text=f"Sidebar Proxy could not reach {site.target}: {err}",
-        )
+        return error_page(site, err)
 
     try:
         ctype = upstream.headers.get("Content-Type", "").split(";")[0].strip().lower()
@@ -472,7 +560,9 @@ async def proxy_request(
 async def make_session() -> aiohttp.ClientSession:
     # auto_decompress off: bytes pass through exactly as the site sent them.
     return aiohttp.ClientSession(
-        auto_decompress=False, cookie_jar=aiohttp.DummyCookieJar()
+        auto_decompress=False,
+        cookie_jar=aiohttp.DummyCookieJar(),
+        timeout=aiohttp.ClientTimeout(total=None, sock_connect=10),
     )
 
 
@@ -593,6 +683,8 @@ def load_sites() -> list[Site]:
             options = json.load(fh)
     except FileNotFoundError:
         options = {}
+    extra = re.split(r"[,\s]+", str(options.get("home_networks") or ""))
+    HOME_NETS[:] = parse_networks(DEFAULT_HOME_NETS) + parse_networks(extra)
     items = options.get("sites", [])
     if len(items) > MAX_SITES:
         LOG.warning("Only the first %d sites are used", MAX_SITES)
@@ -604,7 +696,8 @@ def load_sites() -> list[Site]:
             n += 1
             s.sid = f"{base}-{n}"
         seen.add(s.sid.lower())
-        LOG.info("Site %s -> %s  (address: proxy://%s)", s.name, s.target, s.sid)
+        LOG.info("Site %s -> %s  (address: proxy://%s, %s)",
+                 s.name, s.target, s.sid, s.verify_note)
     return sites
 
 
