@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.02.06"
+VERSION = "2026.10.03.02"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 FIRST_PORT = 8101
@@ -167,8 +167,12 @@ def rewrite_css(text: str, prefix: str, basedir: str, site: Site) -> str:
 SHIM = r"""
 (function () {
   var P = __PREFIX__;
+  function dp(u) {
+    return u.replace(/^((?:https?|wss?):\/\/[^\/:?#]+):(?:443|80)(?=[\/?#]|$)/i, "$1");
+  }
   function fix(u) {
     if (typeof u !== "string") return u;
+    u = dp(u);
     if (u.indexOf("//") === 0) return u;
     if (u.charAt(0) === "/") {
       return (u === P || u.indexOf(P + "/") === 0) ? u : P + u;
@@ -202,7 +206,7 @@ SHIM = r"""
     return xo.apply(this, arguments);
   };
   function wsfix(u) {
-    u = String(u);
+    u = dp(String(u));
     var o = location.origin.replace(/^http/, "ws");
     if (u.indexOf(o + "/") === 0) {
       var r = u.slice(o.length);

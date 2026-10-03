@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.10.03.02
+
+- Fix: sites that write their socket address with a port, like Dockge (:443), now work in proxy mode.
+- Add-on only. The integration is unchanged (2026.10.03.01).
+
 ## 2026.10.02.06
 
 - New: show any site through Home Assistant itself. Use `proxy://1` (site number) as the address in Sidebar Sites.

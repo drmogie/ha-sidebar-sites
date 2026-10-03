@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.10.03.02
+
+- Fix: sites that write their socket address with a port, like Dockge (:443), now work in proxy mode.
+- Add-on only. The integration is unchanged (2026.10.03.01).
+
 ## 2026.10.03.01
 
 - Every sidebar site is now its own entry (its own service) in the integration list.
