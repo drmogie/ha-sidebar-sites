@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.04
+
+- Same as 2026.10.03.03 (relative address fix for Technitium DNS). The .03 release had a broken add-on file, so use this one.
+
 ## 2026.10.03.03
 
 - Fix: sites that ask for addresses without a leading slash, like Technitium DNS ("api/status"), now work in proxy mode.

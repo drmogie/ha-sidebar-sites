@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.03"
+VERSION = "2026.10.03.04"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 FIRST_PORT = 8101
