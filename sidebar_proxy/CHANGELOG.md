@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.10.03.03
+
+- Fix: sites that ask for addresses without a leading slash, like Technitium DNS ("api/status"), now work in proxy mode.
+- Add-on only. The integration is unchanged (2026.10.03.01).
+
 ## 2026.10.03.02
 
 - Fix: sites that write their socket address with a port, like Dockge (:443), now work in proxy mode.

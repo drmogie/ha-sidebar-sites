@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.02"
+VERSION = "2026.10.03.03"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 FIRST_PORT = 8101
@@ -181,6 +181,15 @@ SHIM = r"""
     if (u.indexOf(o + "/") === 0) {
       var r = u.slice(o.length);
       return o + ((r === P || r.indexOf(P + "/") === 0) ? r : P + r);
+    }
+    if (u !== "" && u.charAt(0) !== "#" && !/^[a-z][a-z0-9+.\-]*:/i.test(u)) {
+      try {
+        var q = new URL(u, location.href);
+        if (q.origin === o) {
+          var h = q.pathname;
+          return ((h === P || h.indexOf(P + "/") === 0) ? h : P + h) + q.search + q.hash;
+        }
+      } catch (e) {}
     }
     return u;
   }
