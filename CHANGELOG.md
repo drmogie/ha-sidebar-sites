@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026.10.02.06
+
+- New: show any site through Home Assistant itself. Use `proxy://1` (site number) as the address in Sidebar Sites.
+- Works over HTTPS, needs no domain and no NPM host, and uses your Home Assistant login.
+- The add-on rewrites the page so links, scripts, requests and websockets keep working.
+- Fix: quiet log noise when the browser closes a page early.
+
 ## 2026.10.02.05
 
 - Fix: sites that break out of the frame (and leave Home Assistant) are now kept inside the page.

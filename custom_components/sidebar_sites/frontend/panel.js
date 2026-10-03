@@ -1,5 +1,5 @@
-/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.02.05 */
-const SIDEBAR_SITES_VERSION = "2026.10.02.05";
+/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.02.06 */
+const SIDEBAR_SITES_VERSION = "2026.10.02.06";
 
 const MENU_ICON =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
@@ -34,10 +34,72 @@ class SidebarSitesPanel extends HTMLElement {
     return { url: cfg.site_url || "", name: cfg.site_name || "Site" };
   }
 
+  _proxyNumber(url) {
+    const m = /^proxy:\/\/(\d{1,2})$/.exec(url || "");
+    return m ? Number(m[1]) : 0;
+  }
+
+  // Finds the Sidebar Proxy add-on and builds its Home Assistant (Ingress) address.
+  async _loadProxy(number) {
+    const note = (html) => {
+      const el = this.shadowRoot.querySelector("#slot");
+      if (el) el.innerHTML = `<div class="note">${html}</div>`;
+    };
+    try {
+      for (let i = 0; i < 50 && !this._hass; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      const hass = this._hass;
+      if (!hass) throw new Error("Home Assistant is not ready.");
+      const call = (endpoint, method, data) =>
+        hass.callWS({ type: "supervisor/api", endpoint, method, ...(data ? { data } : {}) });
+      const list = await call("/addons", "get");
+      const addon = (list.addons || []).find((a) => /_sidebar_proxy$/.test(a.slug));
+      if (!addon) throw new Error("The Sidebar Proxy add-on is not installed.");
+      const info = await call(`/addons/${addon.slug}/info`, "get");
+      if (info.state !== "started") throw new Error("The Sidebar Proxy add-on is not running. Start it first.");
+      if (!info.ingress_url) throw new Error("The add-on has no Home Assistant address.");
+
+      const setCookie = (session) => {
+        document.cookie =
+          `ingress_session=${session};path=/api/hassio_ingress/;SameSite=Strict` +
+          (location.protocol === "https:" ? ";Secure" : "");
+      };
+      const created = await call("/ingress/session", "post");
+      setCookie(created.session);
+      clearInterval(this._renew);
+      this._renew = setInterval(async () => {
+        try {
+          await call("/ingress/validate_session", "post", { session: created.session });
+        } catch (e) {
+          try {
+            const fresh = await call("/ingress/session", "post");
+            setCookie(fresh.session);
+          } catch (e2) { /* try again next time */ }
+        }
+      }, 5 * 60 * 1000);
+
+      const src = info.ingress_url.replace(/\/$/, "") + `/s/${number}/`;
+      const frame = this.shadowRoot.querySelector("iframe");
+      if (frame) frame.src = src;
+      const open = this.shadowRoot.querySelector("#open");
+      if (open) open.href = src;
+    } catch (err) {
+      const msg = String((err && (err.message || err.error || err.code)) || err)
+        .replace(/[&<>"']/g, "");
+      note(`<b>This page cannot load.</b><br>${msg}`);
+    }
+  }
+
+  disconnectedCallback() {
+    clearInterval(this._renew);
+  }
+
   _render() {
     const { url, name } = this._config();
+    const proxyNumber = this._proxyNumber(url);
     const mixed =
-      location.protocol === "https:" && /^http:/i.test(url);
+      !proxyNumber && location.protocol === "https:" && /^http:/i.test(url);
     const esc = (t) =>
       String(t).replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -63,7 +125,7 @@ class SidebarSitesPanel extends HTMLElement {
           <svg viewBox="0 0 24 24"><path d="${MENU_ICON}"/></svg>
         </button>
         <div class="title">${esc(name)}</div>
-        <a class="btn" href="${esc(url)}" target="_blank" rel="noopener" title="Open in a new tab">
+        <a class="btn" id="open" href="${proxyNumber ? "#" : esc(url)}" target="_blank" rel="noopener" title="Open in a new tab">
           <svg viewBox="0 0 24 24"><path d="${OPEN_ICON}"/></svg>
         </a>
       </div>
@@ -76,11 +138,12 @@ class SidebarSitesPanel extends HTMLElement {
               The browser blocks that.<br><br>
               Fix: give the site an HTTPS address, for example with Nginx Proxy Manager.
               Or open it in a new tab: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>`
-          : `<iframe src="${esc(url)}" title="${esc(name)}"
+          : `<div id="slot" style="display:contents"><iframe ${proxyNumber ? "" : `src="${esc(url)}"`} title="${esc(name)}"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock"
               allow="fullscreen; clipboard-read; clipboard-write; camera; microphone; geolocation; autoplay"
-              allowfullscreen></iframe>`
+              allowfullscreen></iframe></div>`
       }`;
+    if (proxyNumber) this._loadProxy(proxyNumber);
 
     const menu = this.shadowRoot.querySelector("#menu");
     if (menu) {

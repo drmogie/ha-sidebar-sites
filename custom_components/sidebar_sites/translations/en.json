@@ -22,7 +22,7 @@
       },
       "add_site": {
         "title": "Add a site",
-        "description": "The site shows as a page in the sidebar. If it will not load, use the Sidebar Proxy add-on.",
+        "description": "The site shows as a page in the sidebar. For a site that blocks frames, or an HTTP site on an HTTPS Home Assistant, add it to the Sidebar Proxy add-on and use proxy://1 (site number 1, 2, and so on).",
         "data": {
           "name": "Name",
           "url": "Address (URL)",
@@ -55,7 +55,7 @@
       }
     },
     "error": {
-      "invalid_url": "The address must start with http:// or https://",
+      "invalid_url": "The address must start with http:// or https://, or be proxy://1 (for the Sidebar Proxy add-on).",
       "invalid_name": "Please type a name.",
       "duplicate_name": "A site with this name already exists."
     },

@@ -1,6 +1,7 @@
 """Config flow for Sidebar Sites."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -19,6 +20,14 @@ from .const import (
     CONF_URL,
     DOMAIN,
 )
+
+
+_PROXY_RE = re.compile(r"^proxy://\d{1,2}$")
+
+
+def _valid_address(url: str) -> bool:
+    """A normal web address, or proxy://N for site N of the Sidebar Proxy add-on."""
+    return url.lower().startswith(("http://", "https://")) or bool(_PROXY_RE.match(url))
 
 
 class SidebarSitesConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -64,7 +73,7 @@ class SidebarSitesOptionsFlow(OptionsFlow):
             url = user_input[CONF_URL].strip()
             name = user_input[CONF_NAME].strip()
             slug = "site-" + slugify(name, separator="-")
-            if not url.lower().startswith(("http://", "https://")):
+            if not _valid_address(url):
                 errors[CONF_URL] = "invalid_url"
             elif not name or slug == "site-":
                 errors[CONF_NAME] = "invalid_name"
@@ -85,9 +94,7 @@ class SidebarSitesOptionsFlow(OptionsFlow):
         schema = vol.Schema(
             {
                 vol.Required(CONF_NAME): selector.TextSelector(),
-                vol.Required(CONF_URL): selector.TextSelector(
-                    selector.TextSelectorConfig(type=selector.TextSelectorType.URL)
-                ),
+                vol.Required(CONF_URL): selector.TextSelector(),
                 vol.Optional(CONF_ICON, default="mdi:web"): selector.IconSelector(),
                 vol.Optional(CONF_ADMIN_ONLY, default=False): selector.BooleanSelector(),
             }
@@ -136,7 +143,7 @@ class SidebarSitesOptionsFlow(OptionsFlow):
         if user_input is not None:
             url = user_input[CONF_URL].strip()
             name = user_input[CONF_NAME].strip()
-            if not url.lower().startswith(("http://", "https://")):
+            if not _valid_address(url):
                 errors[CONF_URL] = "invalid_url"
             elif not name:
                 errors[CONF_NAME] = "invalid_name"
@@ -158,9 +165,7 @@ class SidebarSitesOptionsFlow(OptionsFlow):
         schema = vol.Schema(
             {
                 vol.Required(CONF_NAME): selector.TextSelector(),
-                vol.Required(CONF_URL): selector.TextSelector(
-                    selector.TextSelectorConfig(type=selector.TextSelectorType.URL)
-                ),
+                vol.Required(CONF_URL): selector.TextSelector(),
                 vol.Optional(CONF_ICON): selector.IconSelector(),
                 vol.Optional(CONF_ADMIN_ONLY): selector.BooleanSelector(),
             }

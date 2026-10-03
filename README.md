@@ -30,14 +30,15 @@ Each site gets its own sidebar item.
 3. Install Sidebar Proxy.
 4. In Configuration, add the site (name and address).
 5. Start the add-on.
-6. Site 1 is on port 8101, site 2 on 8102, and so on.
-7. In Sidebar Sites, use `http://YOUR-HA-ADDRESS:8101` as the address.
+6. Site 1 is number 1, site 2 is number 2, and so on.
+7. In Sidebar Sites, use `proxy://1` as the address for site 1.
+   This works over HTTPS too, with no domain or NPM host.
 
 See [sidebar_proxy/DOCS.md](sidebar_proxy/DOCS.md) for details.
 
 ## Limits
 
-- HTTPS Home Assistant cannot frame plain HTTP sites. Put the proxy port behind HTTPS.
-- The proxy port has no login. Keep it on your home network.
+- A plain `http://` address cannot show on an HTTPS Home Assistant. Use `proxy://1` instead.
+- The direct proxy ports (8101 and up) have no login. Keep them on your home network.
 - Some sites (banks, Google sign-in) block frames on purpose and may still fail.
 - This is early. Test on a test server first.
