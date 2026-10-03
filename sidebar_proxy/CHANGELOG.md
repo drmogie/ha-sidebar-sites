@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.06
+
+- Fix: pages that load code with a relative import (for example Dockhand) now load in proxy mode.
+
 ## 2026.10.03.05
 
 - Fix: pages with script code like new URL(...) (for example Dockhand) no longer break in proxy mode. The proxy changed the letter case of URL( inside scripts.
