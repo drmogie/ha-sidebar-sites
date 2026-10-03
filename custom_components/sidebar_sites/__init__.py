@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import hashlib
 from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
@@ -25,6 +26,12 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _asset_version() -> str:
+    """Short fingerprint of panel.js, so a changed file is never served from cache."""
+    path = Path(__file__).parent / "frontend" / "panel.js"
+    return hashlib.sha1(path.read_bytes()).hexdigest()[:10]
+
+
 async def _register_static(hass: HomeAssistant) -> None:
     """Serve the panel JavaScript once."""
     if hass.data.get(DOMAIN, {}).get("static"):
@@ -39,6 +46,7 @@ async def _register_static(hass: HomeAssistant) -> None:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Create one sidebar page for every saved site."""
     await _register_static(hass)
+    asset_version = await hass.async_add_executor_job(_asset_version)
 
     paths: list[str] = []
     for site in entry.options.get(CONF_SITES, []):
@@ -50,7 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 frontend_url_path=path,
                 sidebar_title=site[CONF_NAME],
                 sidebar_icon=site.get(CONF_ICON) or "mdi:web",
-                module_url=f"{STATIC_URL}?v={VERSION}",
+                module_url=f"{STATIC_URL}?v={VERSION}-{asset_version}",
                 require_admin=site.get(CONF_ADMIN_ONLY, False),
                 config={"site_url": site[CONF_URL], "site_name": site[CONF_NAME]},
             )

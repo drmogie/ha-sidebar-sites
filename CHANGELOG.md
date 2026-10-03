@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.10.02.05
+
+- Fix: sites that break out of the frame (and leave Home Assistant) are now kept inside the page.
+- The page file now has a fingerprint, so changes show up without a restart or a cache clear.
+- Add-on unchanged (still 2026.10.02.03).
+
 ## 2026.10.02.04
 
 - Integration: you can now change a site (name, address, icon, admin only) from Configure, Change a site.

@@ -1,5 +1,5 @@
-/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.02.04 */
-const SIDEBAR_SITES_VERSION = "2026.10.02.04";
+/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.02.05 */
+const SIDEBAR_SITES_VERSION = "2026.10.02.05";
 
 const MENU_ICON =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
@@ -77,6 +77,7 @@ class SidebarSitesPanel extends HTMLElement {
               Fix: give the site an HTTPS address, for example with Nginx Proxy Manager.
               Or open it in a new tab: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>`
           : `<iframe src="${esc(url)}" title="${esc(name)}"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock"
               allow="fullscreen; clipboard-read; clipboard-write; camera; microphone; geolocation; autoplay"
               allowfullscreen></iframe>`
       }`;
