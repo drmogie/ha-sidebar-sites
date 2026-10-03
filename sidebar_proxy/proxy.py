@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.09"
+VERSION = "2026.10.03.10"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -342,6 +342,46 @@ SHIM = r"""
     window.EventSource.prototype = E.prototype;
   }
   // A form with no action posts to the page address, which the shim moved.
+  // Markup added by scripts (innerHTML, templates) skips the server rewrite.
+  // Watch for it and fix src, href, srcset and inline css urls.
+  var URLATTRS = ["src", "href", "poster", "data-src", "srcset", "style"];
+  function fixCss(v) {
+    return v.replace(/url\(\s*(["']?)(.*?)\1\s*\)/gi, function (m, q, u) {
+      if (!u || u.charAt(0) === "#" || /^(data|blob):/i.test(u)) return m;
+      return "url(" + q + fix(u) + q + ")";
+    });
+  }
+  function fixAttrs(el) {
+    if (!el || el.nodeType !== 1 || el.tagName === "SCRIPT") return;
+    for (var i = 0; i < URLATTRS.length; i++) {
+      var a = URLATTRS[i], v = el.getAttribute(a);
+      if (!v) continue;
+      var n;
+      if (a === "style") { if (v.indexOf("url(") < 0) continue; n = fixCss(v); }
+      else if (a === "srcset") {
+        n = v.split(",").map(function (p) {
+          var t = p.trim().split(/\s+/); t[0] = fix(t[0]); return t.join(" ");
+        }).join(", ");
+      } else n = fix(v);
+      if (n !== v) { try { el.setAttribute(a, n); } catch (e) {} }
+    }
+  }
+  function fixTree(node) {
+    if (!node || node.nodeType !== 1) return;
+    fixAttrs(node);
+    var all = node.querySelectorAll ? node.querySelectorAll("[src],[href],[poster],[data-src],[srcset],[style]") : [];
+    for (var i = 0; i < all.length; i++) fixAttrs(all[i]);
+  }
+  try {
+    new MutationObserver(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        var m = list[i];
+        if (m.type === "attributes") fixAttrs(m.target);
+        else for (var j = 0; j < m.addedNodes.length; j++) fixTree(m.addedNodes[j]);
+      }
+    }).observe(document, { subtree: true, childList: true, attributes: true,
+      attributeFilter: ["src", "poster", "srcset", "style", "data-src"] });
+  } catch (e) {}
   window.__sbImp = function (u) { return import(fix(String(u))); };
   function fixForm(f) {
     try {

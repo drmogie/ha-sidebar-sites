@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.10
+
+- Fix: images, logos and backgrounds that a page adds with a script (CasaOS, Dockhand, Technitium) now load.
+
 ## 2026.10.03.09
 
 - Fix: pages that load code with an absolute import (like the OPNsense Lobby dashboard widgets) now load in proxy mode.
