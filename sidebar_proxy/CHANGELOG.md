@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.05
+
+- Fix: pages with script code like new URL(...) (for example Dockhand) no longer break in proxy mode. The proxy changed the letter case of URL( inside scripts.
+
 ## 2026.10.03.04
 
 - Same as 2026.10.03.03 (relative address fix for Technitium DNS). The .03 release had a broken add-on file, so use this one.

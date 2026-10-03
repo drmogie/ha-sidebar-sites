@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.04"
+VERSION = "2026.10.03.05"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 FIRST_PORT = 8101
@@ -107,6 +107,7 @@ ATTR_RE = re.compile(
 )
 CSS_URL_RE = re.compile(r"""url\(\s*(["']?)(.*?)\1\s*\)""", re.I | re.S)
 CSS_IMPORT_RE = re.compile(r"""(@import\s+)(["'])(.*?)\2""", re.I)
+SCRIPT_BLOCK_RE = re.compile(r"(<script\b.*?</script>)", re.I | re.S)
 HEAD_RE = re.compile(r"<head[^>]*>", re.I)
 CHARSET_RE = re.compile(r"charset=([\w\-]+)", re.I)
 
@@ -140,10 +141,14 @@ def rewrite_html(text: str, prefix: str, basedir: str, site: Site) -> str:
 
     def css(match: re.Match) -> str:
         new = fix_url(match.group(2), prefix, basedir, site, False)
-        return f"url({match.group(1)}{new}{match.group(1)})"
+        return f"{match.group(0)[:3]}({match.group(1)}{new}{match.group(1)})"
 
     text = ATTR_RE.sub(attr, text)
-    text = CSS_URL_RE.sub(css, text)
+    # Leave script code alone (it can contain things like new URL(...)).
+    parts = SCRIPT_BLOCK_RE.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = CSS_URL_RE.sub(css, parts[i])
+    text = "".join(parts)
     shim = f"<script>{SHIM.replace('__PREFIX__', json.dumps(prefix))}</script>"
     if HEAD_RE.search(text):
         return HEAD_RE.sub(lambda m: m.group(0) + shim, text, count=1)
@@ -153,7 +158,7 @@ def rewrite_html(text: str, prefix: str, basedir: str, site: Site) -> str:
 def rewrite_css(text: str, prefix: str, basedir: str, site: Site) -> str:
     def css(match: re.Match) -> str:
         new = fix_url(match.group(2), prefix, basedir, site, False)
-        return f"url({match.group(1)}{new}{match.group(1)})"
+        return f"{match.group(0)[:3]}({match.group(1)}{new}{match.group(1)})"
 
     def imp(match: re.Match) -> str:
         new = fix_url(match.group(3), prefix, basedir, site, False)
