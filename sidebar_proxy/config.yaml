@@ -1,0 +1,25 @@
+name: Sidebar Proxy
+version: "2026.10.02.01"
+slug: sidebar_proxy
+description: Lets websites that block frames load in a Home Assistant sidebar page
+url: https://github.com/drmogie/ha-sidebar-sites
+arch:
+  - amd64
+  - aarch64
+init: false
+startup: services
+boot: auto
+host_network: true
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:swap-horizontal
+panel_title: Sidebar Proxy
+panel_admin: true
+options:
+  sites: []
+schema:
+  sites:
+    - name: str
+      url: url
+      port: port
+      verify_ssl: bool?

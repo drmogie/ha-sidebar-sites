@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sidebar Sites",
+        "description": "This sets up Sidebar Sites. You add websites next, using the Configure button."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Sidebar Sites is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sidebar Sites",
+        "menu_options": {
+          "add_site": "Add a site",
+          "remove_site": "Remove sites"
+        }
+      },
+      "add_site": {
+        "title": "Add a site",
+        "description": "The site shows as a page in the sidebar. If it will not load, use the Sidebar Proxy add-on.",
+        "data": {
+          "name": "Name",
+          "url": "Address (URL)",
+          "icon": "Icon",
+          "admin_only": "Only admins can see it"
+        }
+      },
+      "remove_site": {
+        "title": "Remove sites",
+        "data": {
+          "remove": "Sites to remove"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "The address must start with http:// or https://",
+      "invalid_name": "Please type a name.",
+      "duplicate_name": "A site with this name already exists."
+    }
+  }
+}
