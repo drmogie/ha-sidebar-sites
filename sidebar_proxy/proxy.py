@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.08"
+VERSION = "2026.10.03.09"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -246,6 +246,15 @@ def rewrite_html(text: str, prefix: str, basedir: str, site: Site) -> str:
     return shim + text
 
 
+JS_IMPORT_RE = re.compile(r"""(?<![\w$.])import\(\s*(["'])/(?!/)""")
+JS_TYPES = ("application/javascript", "text/javascript", "application/x-javascript")
+
+
+def rewrite_js(text: str) -> str:
+    """import("/x.js") ignores the page address, so send it through the shim."""
+    return JS_IMPORT_RE.sub(lambda m: f"__sbImp({m.group(1)}/", text)
+
+
 def rewrite_css(text: str, prefix: str, basedir: str, site: Site) -> str:
     def css(match: re.Match) -> str:
         new = fix_url(match.group(2), prefix, basedir, site, False)
@@ -333,6 +342,7 @@ SHIM = r"""
     window.EventSource.prototype = E.prototype;
   }
   // A form with no action posts to the page address, which the shim moved.
+  window.__sbImp = function (u) { return import(fix(String(u))); };
   function fixForm(f) {
     try {
       if (f && f.tagName === "FORM" && !f.hasAttribute("action")) {
@@ -489,7 +499,7 @@ async def proxy_request(
             ingress
             and request.method != "HEAD"
             and upstream.status not in (204, 304)
-            and ctype in ("text/html", "text/css")
+            and (ctype in ("text/html", "text/css") or ctype in JS_TYPES)
             and not upstream.headers.get("Content-Encoding")
             and int(upstream.headers.get("Content-Length", "0") or 0) <= MAX_REWRITE_BYTES
         )
@@ -525,6 +535,8 @@ async def proxy_request(
             basedir = path_only[: path_only.rfind("/") + 1] or "/"
             if ctype == "text/html":
                 text = rewrite_html(text, prefix, basedir, site)
+            elif ctype in JS_TYPES:
+                text = rewrite_js(text)
             else:
                 text = rewrite_css(text, prefix, basedir, site)
             response = web.Response(status=upstream.status, body=text.encode(encoding))

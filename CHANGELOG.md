@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.09
+
+- Fix: pages that load code with an absolute import (like the OPNsense Lobby dashboard widgets) now load in proxy mode.
+
 ## 2026.10.03.08
 
 - Fix: login pages whose form has no address (like OPNsense) no longer end on a white page.
