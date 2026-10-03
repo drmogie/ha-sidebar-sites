@@ -1,7 +1,7 @@
 name: Sidebar Proxy
-version: "2026.10.03.06"
+version: "2026.10.03.07"
 slug: sidebar_proxy
-description: Lets websites that block frames load in a Home Assistant sidebar page
+description: Open any website, even on your home network, inside Home Assistant from one sidebar page
 url: https://github.com/drmogie/ha-sidebar-sites
 arch:
   - amd64
@@ -9,32 +9,11 @@ arch:
 init: false
 startup: services
 boot: auto
-ports:
-  8101/tcp: 8101
-  8102/tcp: 8102
-  8103/tcp: 8103
-  8104/tcp: 8104
-  8105/tcp: 8105
-  8106/tcp: 8106
-  8107/tcp: 8107
-  8108/tcp: 8108
-  8109/tcp: 8109
-  8110/tcp: 8110
-ports_description:
-  8101/tcp: Site 1
-  8102/tcp: Site 2
-  8103/tcp: Site 3
-  8104/tcp: Site 4
-  8105/tcp: Site 5
-  8106/tcp: Site 6
-  8107/tcp: Site 7
-  8108/tcp: Site 8
-  8109/tcp: Site 9
-  8110/tcp: Site 10
 ingress: true
 ingress_port: 8099
+ingress_panel: true
 panel_icon: mdi:swap-horizontal
-panel_title: Sidebar Proxy
+panel_title: Sidebar Sites
 panel_admin: true
 options:
   sites: []

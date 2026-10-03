@@ -1,5 +1,5 @@
-/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.03.01 */
-const SIDEBAR_SITES_VERSION = "2026.10.03.01";
+/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.03.07 */
+const SIDEBAR_SITES_VERSION = "2026.10.03.07";
 
 const MENU_ICON =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
@@ -34,13 +34,13 @@ class SidebarSitesPanel extends HTMLElement {
     return { url: cfg.site_url || "", name: cfg.site_name || "Site" };
   }
 
-  _proxyNumber(url) {
-    const m = /^proxy:\/\/(\d{1,2})$/.exec(url || "");
-    return m ? Number(m[1]) : 0;
+  _proxyId(url) {
+    const m = /^proxy:\/\/([A-Za-z0-9._~-]{1,64})$/.exec(url || "");
+    return m ? m[1] : "";
   }
 
   // Finds the Sidebar Proxy add-on and builds its Home Assistant (Ingress) address.
-  async _loadProxy(number) {
+  async _loadProxy(id) {
     const note = (html) => {
       const el = this.shadowRoot.querySelector("#slot");
       if (el) el.innerHTML = `<div class="note">${html}</div>`;
@@ -79,7 +79,7 @@ class SidebarSitesPanel extends HTMLElement {
         }
       }, 5 * 60 * 1000);
 
-      const src = info.ingress_url.replace(/\/$/, "") + `/s/${number}/`;
+      const src = info.ingress_url.replace(/\/$/, "") + `/s/${encodeURIComponent(id)}/`;
       const frame = this.shadowRoot.querySelector("iframe");
       if (frame) frame.src = src;
       const open = this.shadowRoot.querySelector("#open");
@@ -97,9 +97,9 @@ class SidebarSitesPanel extends HTMLElement {
 
   _render() {
     const { url, name } = this._config();
-    const proxyNumber = this._proxyNumber(url);
+    const proxyId = this._proxyId(url);
     const mixed =
-      !proxyNumber && location.protocol === "https:" && /^http:/i.test(url);
+      !proxyId && location.protocol === "https:" && /^http:/i.test(url);
     const esc = (t) =>
       String(t).replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -125,7 +125,7 @@ class SidebarSitesPanel extends HTMLElement {
           <svg viewBox="0 0 24 24"><path d="${MENU_ICON}"/></svg>
         </button>
         <div class="title">${esc(name)}</div>
-        <a class="btn" id="open" href="${proxyNumber ? "#" : esc(url)}" target="_blank" rel="noopener" title="Open in a new tab">
+        <a class="btn" id="open" href="${proxyId ? "#" : esc(url)}" target="_blank" rel="noopener" title="Open in a new tab">
           <svg viewBox="0 0 24 24"><path d="${OPEN_ICON}"/></svg>
         </a>
       </div>
@@ -138,12 +138,12 @@ class SidebarSitesPanel extends HTMLElement {
               The browser blocks that.<br><br>
               Fix: give the site an HTTPS address, for example with Nginx Proxy Manager.
               Or open it in a new tab: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>`
-          : `<div id="slot" style="display:contents"><iframe ${proxyNumber ? "" : `src="${esc(url)}"`} title="${esc(name)}"
+          : `<div id="slot" style="display:contents"><iframe ${proxyId ? "" : `src="${esc(url)}"`} title="${esc(name)}"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock"
               allow="fullscreen; clipboard-read; clipboard-write; camera; microphone; geolocation; autoplay"
               allowfullscreen></iframe></div>`
       }`;
-    if (proxyNumber) this._loadProxy(proxyNumber);
+    if (proxyId) this._loadProxy(proxyId);
 
     const menu = this.shadowRoot.querySelector("#menu");
     if (menu) {

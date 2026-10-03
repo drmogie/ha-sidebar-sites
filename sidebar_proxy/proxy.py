@@ -1,17 +1,15 @@
 """Sidebar Proxy: a small reverse proxy that lets any website load inside
-a Home Assistant sidebar page (an iframe).
+Home Assistant.
 
-Two ways to reach a site:
+Every site is served through Home Assistant itself (Ingress), at
+/s/<id>/ under the add-on's Ingress address. The id is the site name with
+dashes instead of spaces (for example Dockge-250). This is HTTPS when Home
+Assistant is HTTPS, and it is protected by the Home Assistant login. The proxy
+removes the headers that stop a page from loading inside a frame, and rewrites
+the page so its links, scripts and requests keep working under that path.
 
-1. Port mode. Each site gets its own port (8101, 8102, and so on, in order).
-   The site is served from the root of that port. Plain HTTP.
-2. Ingress mode. Every site is also served through Home Assistant itself, at
-   /s/<number>/ under the add-on's Ingress address. This is HTTPS when Home
-   Assistant is HTTPS, and it is protected by the Home Assistant login. The
-   proxy rewrites the page so its links, scripts and requests keep working
-   under that path.
-
-Both modes remove the headers that stop a page from loading inside a frame.
+The add-on's own sidebar item shows a launcher page with one tab per site.
+The older site number (/s/1/) still works as an id.
 """
 import asyncio
 import html
@@ -24,11 +22,10 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.06"
+VERSION = "2026.10.03.07"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
-FIRST_PORT = 8101
-MAX_SITES = 10
+MAX_SITES = 50
 MAX_REWRITE_BYTES = 8 * 1024 * 1024
 
 LOG = logging.getLogger("sidebar_proxy")
@@ -75,11 +72,20 @@ def fix_cookie(value: str, prefix: str | None = None) -> str:
     return ";".join(out)
 
 
+def make_id(name: str) -> str:
+    """Site name -> id: dashes instead of spaces, only safe characters."""
+    sid = re.sub(r"\s+", "-", name.strip())
+    sid = re.sub(r"[^A-Za-z0-9._~-]", "-", sid)
+    sid = re.sub(r"-{2,}", "-", sid).strip("-")
+    return sid
+
+
 class Site:
     def __init__(self, conf: dict, index: int):
         self.name = conf["name"]
         self.number = index + 1
-        self.port = FIRST_PORT + index
+        self.sid = make_id(self.name) or f"site-{self.number}"
+        self.icon = conf.get("icon") or ""
         self.target = conf["url"].rstrip("/")
         parts = urlsplit(self.target)
         self.origin = f"{parts.scheme}://{parts.netloc}"
@@ -470,65 +476,98 @@ async def make_session() -> aiohttp.ClientSession:
     )
 
 
-async def start_site(site: Site) -> web.AppRunner:
-    app = web.Application(client_max_size=0)
-    app["site"] = site
-    app["session"] = await make_session()
-
-    async def handle(request: web.Request) -> web.StreamResponse:
-        return await proxy_request(request, site, request.rel_url.raw_path_qs, None)
-
-    async def close_session(app_: web.Application):
-        await app_["session"].close()
-
-    app.router.add_route("*", "/{tail:.*}", handle)
-    app.on_cleanup.append(close_session)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    await web.TCPSite(runner, "0.0.0.0", site.port).start()
-    LOG.info("Port mode: %s -> %s on port %s", site.name, site.target, site.port)
-    return runner
+LAUNCHER = r"""<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sidebar Proxy</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1c1c1c;--bar:#f1f3f4;--line:#d0d4d8;--on:#03a9f4;--onfg:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#e8e8e8;--bar:#1e1e1e;--line:#333}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font-family:Roboto,system-ui,sans-serif}
+#bar{display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--bar);border-bottom:1px solid var(--line)}
+#tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+button{font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:16px;padding:5px 14px;cursor:pointer}
+button:hover{border-color:var(--on)}
+button.on{background:var(--on);border-color:var(--on);color:var(--onfg)}
+#tools button{border-radius:6px;padding:5px 10px}
+#view{flex:1;border:0;width:100%;background:#fff}
+#empty{padding:24px;line-height:1.6}
+code{background:var(--bar);padding:1px 5px;border-radius:4px}
+small{opacity:.7;padding:0 6px}
+</style></head><body>
+<div id="bar"><div id="tabs"></div>
+<div id="tools"><button id="reload" title="Reload this site">Reload</button>
+<button id="out" title="Open this site in a new tab">New tab</button></div>
+<small>__VERSION__</small></div>
+<div id="empty" hidden>No sites yet. Add some in the add-on Configuration tab, then restart the add-on.</div>
+<iframe id="view" hidden
+ sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock"></iframe>
+<script>
+(function(){
+  var BASE=__BASE__, SITES=__SITES__;
+  var tabs=document.getElementById("tabs"), view=document.getElementById("view"), empty=document.getElementById("empty");
+  var current=null;
+  function url(s){return BASE+"/s/"+encodeURIComponent(s.id)+"/";}
+  function pick(id){
+    var s=SITES.filter(function(x){return x.id.toLowerCase()===String(id||"").toLowerCase();})[0]||SITES[0];
+    if(!s)return;
+    current=s;
+    [].forEach.call(tabs.children,function(b){b.className=(b.dataset.id===s.id)?"on":"";});
+    view.src=url(s);
+    try{history.replaceState(null,"","#"+encodeURIComponent(s.id));}catch(e){}
+    try{localStorage.setItem("sidebar-proxy-last",s.id);}catch(e){}
+  }
+  if(!SITES.length){empty.hidden=false;document.getElementById("tools").hidden=true;return;}
+  view.hidden=false;
+  SITES.forEach(function(s){
+    var b=document.createElement("button");
+    b.textContent=s.name;b.dataset.id=s.id;
+    b.title="Address for Sidebar Sites: proxy://"+s.id;
+    b.onclick=function(){pick(s.id);};
+    tabs.appendChild(b);
+  });
+  document.getElementById("reload").onclick=function(){if(current)view.src=url(current);};
+  document.getElementById("out").onclick=function(){if(current)window.open(url(current),"_blank");};
+  var start=decodeURIComponent((location.hash||"").slice(1));
+  if(!start){try{start=localStorage.getItem("sidebar-proxy-last")||"";}catch(e){}}
+  pick(start);
+})();
+</script></body></html>
+"""
 
 
 async def start_ingress(sites: list[Site]) -> web.AppRunner:
-    by_number = {s.number: s for s in sites}
+    by_id: dict[str, Site] = {}
+    for s in sites:
+        by_id[s.sid.lower()] = s
+    for s in sites:  # the old site numbers keep working
+        by_id.setdefault(str(s.number), s)
 
     async def index(request: web.Request) -> web.Response:
-        if sites:
-            body = "".join(
-                f"<li><b>{html.escape(s.name)}</b> shows {html.escape(s.target)}<br>"
-                f"Sidebar Sites address over HTTPS: <code>proxy://{s.number}</code><br>"
-                f"Sidebar Sites address over plain HTTP: <code>http://HOST:{s.port}</code></li>"
-                for s in sites
-            )
-        else:
-            body = "<li>No sites yet. Add some in the add-on Configuration tab.</li>"
+        base = request.headers.get("X-Ingress-Path", "").rstrip("/")
+        data = [{"id": s.sid, "name": s.name} for s in sites]
+        # "<" is escaped so a site name can never close the script tag.
         page = (
-            "<!doctype html><meta charset=utf-8>"
-            "<meta name=viewport content='width=device-width,initial-scale=1'>"
-            "<style>body{font-family:sans-serif;margin:24px;line-height:1.6}"
-            "li{margin-bottom:14px}"
-            "@media(prefers-color-scheme:dark){body{background:#111;color:#eee}}"
-            "</style>"
-            f"<h2>Sidebar Proxy {VERSION}</h2>"
-            "<p>Use these addresses in the Sidebar Sites integration. "
-            "Replace HOST with your Home Assistant address.</p>"
-            f"<ul>{body}</ul>"
+            LAUNCHER.replace("__BASE__", json.dumps(base))
+            .replace("__SITES__", json.dumps(data).replace("<", "\\u003c"))
+            .replace("__VERSION__", html.escape(VERSION))
         )
         return web.Response(text=page, content_type="text/html")
 
     async def site_root(request: web.Request) -> web.StreamResponse:
-        raise web.HTTPFound(request.headers.get("X-Ingress-Path", "")
-                            + f"/s/{request.match_info['num']}/")
+        raise web.HTTPFound(request.headers.get("X-Ingress-Path", "").rstrip("/")
+                            + f"/s/{request.match_info['sid']}/")
 
     async def handle(request: web.Request) -> web.StreamResponse:
-        site = by_number.get(int(request.match_info["num"]))
+        sid = request.match_info["sid"]
+        site = by_id.get(sid.lower())
         if site is None:
             return web.Response(status=404, text="No such site")
-        number = request.match_info["num"]
         raw = request.rel_url.raw_path_qs
-        rest = raw[len(f"/s/{number}"):] or "/"
-        prefix = request.headers.get("X-Ingress-Path", "").rstrip("/") + f"/s/{number}"
+        rest = raw[len(f"/s/{sid}"):] or "/"
+        prefix = request.headers.get("X-Ingress-Path", "").rstrip("/") + f"/s/{sid}"
         return await proxy_request(request, site, rest, prefix)
 
     app = web.Application(client_max_size=0)
@@ -539,8 +578,8 @@ async def start_ingress(sites: list[Site]) -> web.AppRunner:
 
     app.on_cleanup.append(close_session)
     app.router.add_get("/", index)
-    app.router.add_route("*", r"/s/{num:\d+}", site_root)
-    app.router.add_route("*", r"/s/{num:\d+}/{tail:.*}", handle)
+    app.router.add_route("*", r"/s/{sid:[^/]+}", site_root)
+    app.router.add_route("*", r"/s/{sid:[^/]+}/{tail:.*}", handle)
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", STATUS_PORT).start()
@@ -557,20 +596,27 @@ def load_sites() -> list[Site]:
     items = options.get("sites", [])
     if len(items) > MAX_SITES:
         LOG.warning("Only the first %d sites are used", MAX_SITES)
-    return [Site(item, i) for i, item in enumerate(items[:MAX_SITES])]
+    sites = [Site(item, i) for i, item in enumerate(items[:MAX_SITES])]
+    seen: set[str] = set()
+    for s in sites:  # two sites with the same name get -2, -3 and so on
+        base, n = s.sid, 1
+        while s.sid.lower() in seen:
+            n += 1
+            s.sid = f"{base}-{n}"
+        seen.add(s.sid.lower())
+        LOG.info("Site %s -> %s  (address: proxy://%s)", s.name, s.target, s.sid)
+    return sites
 
 
 async def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     sites = load_sites()
-    runners = [await start_site(site) for site in sites]
-    runners.append(await start_ingress(sites))
+    runner = await start_ingress(sites)
     LOG.info("Sidebar Proxy %s ready with %d site(s)", VERSION, len(sites))
     try:
         await asyncio.Event().wait()
     finally:
-        for runner in runners:
-            await runner.cleanup()
+        await runner.cleanup()
 
 
 if __name__ == "__main__":

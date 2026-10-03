@@ -20,11 +20,11 @@ from .const import (
     DOMAIN,
 )
 
-_PROXY_RE = re.compile(r"^proxy://\d{1,2}$")
+_PROXY_RE = re.compile(r"^proxy://[A-Za-z0-9._~-]{1,64}$")
 
 
 def _valid_address(url: str) -> bool:
-    """A normal web address, or proxy://N for site N of the Sidebar Proxy add-on."""
+    """A normal web address, or proxy://<site-name-with-dashes> for a site of the Sidebar Proxy add-on."""
     return url.lower().startswith(("http://", "https://")) or bool(_PROXY_RE.match(url))
 
 

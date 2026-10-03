@@ -1,29 +1,29 @@
 # Sidebar Proxy
 
+Open any website inside Home Assistant. This works for sites on your home network too.
 Some websites refuse to load inside another page. This add-on fixes that.
 It also lets an HTTP site show inside an HTTPS Home Assistant.
 
-## How it works
+## How to use it
 
-- You add a site in Configuration. That is all.
-- The first site is number 1, the second is number 2, and so on, up to 10.
-- The add-on removes the headers that block frames.
+1. Add your sites in the Configuration tab.
+2. Start the add-on.
+3. Turn on "Show in sidebar".
+4. Open "Sidebar Sites" in the sidebar. Click a tab to open that site.
 
-## Two ways to show a site
+You do not need the Sidebar Sites integration. You do not need NPM hosts, domains, or ports.
 
-1. Through Home Assistant (best). In Sidebar Sites, use the address `proxy://1` for site 1.
-   - Works over HTTPS and over HTTP.
-   - Needs no domain, no certificate, and no NPM host.
-   - Uses your Home Assistant login. Only admins can see it.
-   - The add-on fixes the page so its links and requests keep working.
-2. Direct port (plain HTTP only). Site 1 is on port 8101, site 2 on 8102.
-   - Use `http://YOUR-HA-ADDRESS:8101` in Sidebar Sites.
-   - Check the Network section of this add-on. The ports must be switched on.
-   - Blocked if you open Home Assistant over HTTPS.
+## Site ids
+
+- Every site gets an id. It is the name with dashes instead of spaces.
+- "Dockge 250" becomes `Dockge-250`.
+- Two sites with the same name get -2, -3, and so on.
+- The old site number (1, 2, 3) still works as an id.
+- If you use the Sidebar Sites integration, use `proxy://Dockge-250` as its address.
 
 ## Options
 
-- name: a label for you
+- name: the tab name. It also makes the id.
 - url: the real website
 - verify_ssl: turn off for self-signed certificates
 
@@ -34,11 +34,11 @@ It also lets an HTTP site show inside an HTTPS Home Assistant.
 
 Add-on names like a0d7b954-nginxproxymanager work because this add-on shares the add-on network.
 
-## Limits
+## Good to know
 
-- Through Home Assistant, the page is rewritten. Most sites work. Some may not.
-  Sites that build their own links in unusual ways can break.
-- If a site does not work through Home Assistant, try the direct port.
+- The sidebar item is admin only.
+- Uses your Home Assistant login. Works over HTTPS and over HTTP.
+- The "New tab" button opens the site in its own tab. Keep Home Assistant open in another tab so your login stays valid.
+- The page is rewritten so links and requests keep working. Most sites work. Some may not.
 - The site runs on the same address as Home Assistant, like any add-on page. Only add sites you trust.
-- The direct ports have no login. Anyone on your network can open them.
-- Do not forward the direct ports to the internet.
+- Changed the sites? Restart the add-on.

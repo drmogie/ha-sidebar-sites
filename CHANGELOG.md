@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026.10.03.07
+
+- Add-on only: one sidebar item with a tab for each site. No integration needed.
+- Sites use ids from their names, with dashes instead of spaces (Dockge-250). Old numbers (1, 2, 3) still work.
+- The direct ports (8101 and up) are gone. Everything goes through Home Assistant.
+- Integration: addresses can now be proxy://Site-Name as well as proxy://1.
+
 ## 2026.10.03.06
 
 - Fix: pages that load code with a relative import (for example Dockhand) now load in proxy mode.

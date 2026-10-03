@@ -1,7 +1,7 @@
 """Constants for Sidebar Sites."""
 
 DOMAIN = "sidebar_sites"
-VERSION = "2026.10.03.01"
+VERSION = "2026.10.03.07"
 
 CONF_SITES = "sites"
 CONF_NAME = "name"
