@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.10.02.04
+
+- Integration: you can now change a site (name, address, icon, admin only) from Configure, Change a site.
+- The sidebar path stays the same when you rename a site.
+- Add-on unchanged (still 2026.10.02.03).
+
 ## 2026.10.02.03
 
 - Fix: the sidebar page now fills the full height (the page was cut short).

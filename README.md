@@ -20,6 +20,7 @@ This repo has two parts:
 5. Press Configure, then Add a site.
 
 Each site needs a name, an address, and an icon.
+To change a site later: Configure, then Change a site.
 Each site gets its own sidebar item.
 
 ## Install the add-on (only if a site will not load)

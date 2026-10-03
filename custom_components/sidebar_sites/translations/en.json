@@ -16,6 +16,7 @@
         "title": "Sidebar Sites",
         "menu_options": {
           "add_site": "Add a site",
+          "edit_site": "Change a site",
           "remove_site": "Remove sites"
         }
       },
@@ -34,12 +35,32 @@
         "data": {
           "remove": "Sites to remove"
         }
+      },
+      "edit_site": {
+        "title": "Change a site",
+        "description": "Pick the site you want to change.",
+        "data": {
+          "site": "Site"
+        }
+      },
+      "edit_site_form": {
+        "title": "Change a site",
+        "description": "The sidebar address stays the same, even if you change the name.",
+        "data": {
+          "name": "Name",
+          "url": "Address (URL)",
+          "icon": "Icon",
+          "admin_only": "Only admins can see it"
+        }
       }
     },
     "error": {
       "invalid_url": "The address must start with http:// or https://",
       "invalid_name": "Please type a name.",
       "duplicate_name": "A site with this name already exists."
+    },
+    "abort": {
+      "site_missing": "That site no longer exists."
     }
   }
 }
