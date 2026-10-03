@@ -27,3 +27,14 @@
 - Lesson: after changing panel.js, HA must restart so the ?v= module URL changes, or the browser keeps the old file.
 - The add-on build on a Pi 4 takes several minutes; the MCP call times out at 60s but the build continues.
 - Not yet tested: HTTPS HA with proxy behind NPM, websockets on a real site, ha-blue (production, not touched).
+
+## Update 2026-10-03 (versions .03.01 to .03.07)
+
+- Integration: each sidebar site is its own config entry (service). Old single entry migrates by itself.
+- Add-on ingress mode: pages are rewritten (HTML and CSS) and a JS shim patches fetch, XHR, WebSocket, EventSource.
+  - Shim fixes: addresses with :443, relative addresses (no leading slash), URL( inside scripts, relative import().
+- Add-on is now add-on only (.03.07): no ports, one sidebar item with a tab for each site (launcher page).
+- Site ids = name with dashes (Dockge-250). Old numbers still work. Integration accepts proxy://Site-Name.
+- Test flow: ha-pi4 first. Arc HA (arc-ha.d-a-d-s.dev) is the live test server. ha-blue untouched.
+- Gotchas: Pi builds take about 5 minutes (tool calls time out, poll instead). Add-on may show error after update, press Start.
+- Never write a file with open(p,"w") before reading it (this emptied config.yaml once, fixed in .03.04).
