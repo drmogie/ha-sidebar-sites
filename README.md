@@ -17,10 +17,10 @@ This repo has two parts:
 2. Add `https://github.com/drmogie/ha-sidebar-sites` as type Integration.
 3. Download Sidebar Sites. Restart Home Assistant.
 4. Settings, Devices and services, Add integration, Sidebar Sites.
-5. Press Configure, then Add a site.
+5. Fill in the name, address, and icon. Press Submit.
+6. To add another site, press Add entry again.
 
-Each site needs a name, an address, and an icon.
-To change a site later: Configure, then Change a site.
+Every site is its own entry in the list, with its own Configure and Delete.
 Each site gets its own sidebar item.
 
 ## Install the add-on (only if a site will not load)

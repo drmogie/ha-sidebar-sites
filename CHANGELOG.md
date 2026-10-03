@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026.10.03.01
+
+- Every sidebar site is now its own entry (its own service) in the integration list.
+- Add a site with Add entry. Change it with Configure on that entry. Remove it with Delete on that entry.
+- Sites from the old single entry move over by themselves. Their sidebar addresses stay the same.
+- Add-on unchanged (still 2026.10.02.06).
+
 ## 2026.10.02.06
 
 - New: show any site through Home Assistant itself. Use `proxy://1` (site number) as the address in Sidebar Sites.

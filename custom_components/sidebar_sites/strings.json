@@ -2,50 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Sidebar Sites",
-        "description": "This sets up Sidebar Sites. You add websites next, using the Configure button."
-      }
-    },
-    "abort": {
-      "single_instance_allowed": "Sidebar Sites is already set up."
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Sidebar Sites",
-        "menu_options": {
-          "add_site": "Add a site",
-          "edit_site": "Change a site",
-          "remove_site": "Remove sites"
-        }
-      },
-      "add_site": {
         "title": "Add a site",
         "description": "The site shows as a page in the sidebar. For a site that blocks frames, or an HTTP site on an HTTPS Home Assistant, add it to the Sidebar Proxy add-on and use proxy://1 (site number 1, 2, and so on).",
-        "data": {
-          "name": "Name",
-          "url": "Address (URL)",
-          "icon": "Icon",
-          "admin_only": "Only admins can see it"
-        }
-      },
-      "remove_site": {
-        "title": "Remove sites",
-        "data": {
-          "remove": "Sites to remove"
-        }
-      },
-      "edit_site": {
-        "title": "Change a site",
-        "description": "Pick the site you want to change.",
-        "data": {
-          "site": "Site"
-        }
-      },
-      "edit_site_form": {
-        "title": "Change a site",
-        "description": "The sidebar address stays the same, even if you change the name.",
         "data": {
           "name": "Name",
           "url": "Address (URL)",
@@ -60,7 +18,26 @@
       "duplicate_name": "A site with this name already exists."
     },
     "abort": {
-      "site_missing": "That site no longer exists."
+      "already_configured": "This site already exists."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Change this site",
+        "description": "The sidebar address stays the same, even if you change the name.",
+        "data": {
+          "name": "Name",
+          "url": "Address (URL)",
+          "icon": "Icon",
+          "admin_only": "Only admins can see it"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "The address must start with http:// or https://, or be proxy://1 (for the Sidebar Proxy add-on).",
+      "invalid_name": "Please type a name.",
+      "duplicate_name": "A site with this name already exists."
     }
   }
 }

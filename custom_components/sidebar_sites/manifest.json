@@ -1,14 +1,19 @@
 {
   "domain": "sidebar_sites",
   "name": "Sidebar Sites",
-  "codeowners": ["@drmogie"],
+  "codeowners": [
+    "@drmogie"
+  ],
   "config_flow": true,
-  "dependencies": ["http", "frontend", "panel_custom"],
+  "dependencies": [
+    "http",
+    "frontend",
+    "panel_custom"
+  ],
   "documentation": "https://github.com/drmogie/ha-sidebar-sites",
   "integration_type": "service",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/drmogie/ha-sidebar-sites/issues",
   "requirements": [],
-  "single_config_entry": true,
-  "version": "2026.10.02.06"
+  "version": "2026.10.03.01"
 }
