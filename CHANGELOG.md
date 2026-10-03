@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.02.03
+
+- Fix: the sidebar page now fills the full height (the page was cut short).
+
 ## 2026.10.02.02
 
 - Add-on: ports are automatic (8101 and up). Can reach other add-ons by name.

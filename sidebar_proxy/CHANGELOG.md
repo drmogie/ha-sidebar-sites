@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.02.03
+
+- Fix: the sidebar page now fills the full height (the page was cut short).
+
 ## 2026.10.02.02
 
 - Ports are now automatic: 8101, 8102, and so on (up to 10 sites).

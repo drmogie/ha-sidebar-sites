@@ -1,5 +1,5 @@
-/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.02.02 */
-const SIDEBAR_SITES_VERSION = "2026.10.02.02";
+/* Sidebar Sites panel. Shows one website in an iframe. Version 2026.10.02.03 */
+const SIDEBAR_SITES_VERSION = "2026.10.02.03";
 
 const MENU_ICON =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
@@ -45,16 +45,16 @@ class SidebarSitesPanel extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
-        :host { display: block; height: 100%; background: var(--primary-background-color); }
+        :host { display: flex; flex-direction: column; height: 100vh; background: var(--primary-background-color); }
         .bar { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px;
-          box-sizing: border-box; background: var(--app-header-background-color, var(--primary-color));
+          box-sizing: border-box; flex: none; background: var(--app-header-background-color, var(--primary-color));
           color: var(--app-header-text-color, #fff); }
         .title { flex: 1; font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         button, a.btn { background: none; border: 0; color: inherit; cursor: pointer; width: 40px; height: 40px;
           display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
         button:hover, a.btn:hover { background: rgba(255,255,255,0.15); }
         svg { width: 24px; height: 24px; fill: currentColor; }
-        iframe { border: 0; width: 100%; height: calc(100% - 56px); display: block; background: #fff; }
+        iframe { border: 0; width: 100%; flex: 1; min-height: 0; display: block; background: #fff; }
         .note { padding: 24px; color: var(--primary-text-color); max-width: 640px; line-height: 1.5; }
         .note a { color: var(--primary-color); }
       </style>

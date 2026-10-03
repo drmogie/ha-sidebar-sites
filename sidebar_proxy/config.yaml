@@ -1,5 +1,5 @@
 name: Sidebar Proxy
-version: "2026.10.02.02"
+version: "2026.10.02.03"
 slug: sidebar_proxy
 description: Lets websites that block frames load in a Home Assistant sidebar page
 url: https://github.com/drmogie/ha-sidebar-sites
