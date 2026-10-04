@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.15"
+VERSION = "2026.10.04.01"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -169,9 +169,9 @@ class Site:
         timeout = conf.get("timeout")
         self.timeout = int(timeout) if timeout else None
         self.auth = None
-        if conf.get("username"):
-            raw = f"{conf['username']}:{conf.get('password') or ''}".encode()
-            self.auth = "Basic " + base64.b64encode(raw).decode()
+        login = conf.get("basic_login")
+        if login and ":" in str(login):
+            self.auth = "Basic " + base64.b64encode(str(login).encode()).decode()
         explicit = conf.get("verify_ssl")
         if isinstance(explicit, bool):
             self.verify_ssl = explicit

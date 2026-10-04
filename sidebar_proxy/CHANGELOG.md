@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.01
+
+- Change: the username and password boxes are now one box called basic_login (user:password). Chrome was filling the old boxes with your saved logins.
+
 ## 2026.10.03.15
 
 - New "Go to site" button. It opens the real address of the site in a new tab, outside Home Assistant.
