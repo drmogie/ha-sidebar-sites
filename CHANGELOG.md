@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.02
+
+- Fix: forms with an empty action (action="") now save inside the proxy. This fixes the white page on Save in WebVirtCloud.
+
 ## 2026.10.04.01
 
 - Change: the username and password boxes are now one box called basic_login (user:password). Chrome was filling the old boxes with your saved logins.

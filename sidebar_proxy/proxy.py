@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.01"
+VERSION = "2026.10.04.02"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -408,7 +408,7 @@ SHIM = r"""
   window.__sbImp = function (u) { return import(fix(String(u))); };
   function fixForm(f) {
     try {
-      if (f && f.tagName === "FORM" && !f.hasAttribute("action")) {
+      if (f && f.tagName === "FORM" && !f.getAttribute("action")) {
         f.setAttribute("action", fix(location.pathname) + location.search);
       }
     } catch (e) {}
