@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.10"
+VERSION = "2026.10.03.11"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -353,6 +353,14 @@ SHIM = r"""
   }
   function fixAttrs(el) {
     if (!el || el.nodeType !== 1 || el.tagName === "SCRIPT") return;
+    if (el.tagName === "STYLE") {
+      var css = el.textContent;
+      if (css && css.indexOf("url(") >= 0) {
+        var nc = fixCss(css);
+        if (nc !== css) el.textContent = nc;
+      }
+      return;
+    }
     for (var i = 0; i < URLATTRS.length; i++) {
       var a = URLATTRS[i], v = el.getAttribute(a);
       if (!v) continue;
@@ -369,7 +377,7 @@ SHIM = r"""
   function fixTree(node) {
     if (!node || node.nodeType !== 1) return;
     fixAttrs(node);
-    var all = node.querySelectorAll ? node.querySelectorAll("[src],[href],[poster],[data-src],[srcset],[style]") : [];
+    var all = node.querySelectorAll ? node.querySelectorAll("[src],[href],[poster],[data-src],[srcset],[style],style") : [];
     for (var i = 0; i < all.length; i++) fixAttrs(all[i]);
   }
   try {
@@ -377,7 +385,10 @@ SHIM = r"""
       for (var i = 0; i < list.length; i++) {
         var m = list[i];
         if (m.type === "attributes") fixAttrs(m.target);
-        else for (var j = 0; j < m.addedNodes.length; j++) fixTree(m.addedNodes[j]);
+        else {
+          if (m.target.tagName === "STYLE") fixAttrs(m.target);
+          for (var j = 0; j < m.addedNodes.length; j++) fixTree(m.addedNodes[j]);
+        }
       }
     }).observe(document, { subtree: true, childList: true, attributes: true,
       attributeFilter: ["src", "poster", "srcset", "style", "data-src"] });

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.11
+
+- Fix: fonts and icons in styles that a script adds to the page (CasaOS icon font) now load.
+
 ## 2026.10.03.10
 
 - Fix: images, logos and backgrounds that a page adds with a script (CasaOS, Dockhand, Technitium) now load.
