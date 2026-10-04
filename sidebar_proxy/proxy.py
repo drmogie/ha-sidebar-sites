@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.05"
+VERSION = "2026.10.04.06"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -205,7 +205,7 @@ ATTR_RE = re.compile(
 CSS_URL_RE = re.compile(r"""url\(\s*(["']?)(.*?)\1\s*\)""", re.I | re.S)
 CSS_IMPORT_RE = re.compile(r"""(@import\s+)(["'])(.*?)\2""", re.I)
 SCRIPT_BLOCK_RE = re.compile(r"(<script\b.*?</script>)", re.I | re.S)
-DYN_IMPORT_RE = re.compile(r"""\bimport\(\s*["']\.""")
+DYN_IMPORT_RE = re.compile(r"""\bimport\s*\(\s*["']\.|\b(?:from|import)\s*["']\.""")
 HEAD_RE = re.compile(r"<head[^>]*>", re.I)
 CHARSET_RE = re.compile(r"charset=([\w\-]+)", re.I)
 
@@ -248,7 +248,7 @@ def rewrite_html(text: str, prefix: str, basedir: str, site: Site) -> str:
         parts[i] = CSS_URL_RE.sub(css, parts[i])
     text = "".join(parts)
     shim = f"<script>{SHIM.replace('__PREFIX__', json.dumps(prefix))}</script>"
-    # Scripts that load code with a relative import("./x.js") resolve it against the
+    # Scripts that load code with a relative import("./x.js") or import x from "./x.js" resolve it against the
     # page base, which the shim moved. A base tag keeps those imports under the proxy.
     if DYN_IMPORT_RE.search(text):
         shim = f'<base href="{prefix}{basedir}">' + shim

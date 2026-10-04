@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.06
+
+- Fix: pages whose start-up script loads code with a relative import (import x from "./app/x.js") now load through the sidebar. This was the blank page with moving dots on the Chrome Browser add-on after login.
+
 ## 2026.10.04.05
 
 - The username and password boxes are back, with a use_login switch. The proxy only signs in for you when the switch is on.
