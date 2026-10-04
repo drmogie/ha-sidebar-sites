@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.12
+
+- New site options: hidden, rewrite, timeout, username and password.
+
 ## 2026.10.03.11
 
 - Fix: fonts and icons in styles that a script adds to the page (CasaOS icon font) now load.

@@ -12,6 +12,7 @@ The add-on's own sidebar item shows a launcher page with one tab per site.
 The older site number (/s/1/) still works as an id.
 """
 import asyncio
+import base64
 import html
 import ipaddress
 import json
@@ -23,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.11"
+VERSION = "2026.10.03.12"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -163,6 +164,14 @@ class Site:
         self.origin = f"{parts.scheme}://{parts.netloc}"
         self.host = parts.netloc
         self.base_path = parts.path.rstrip("/")
+        self.hidden = bool(conf.get("hidden", False))
+        self.rewrite = conf.get("rewrite", True) is not False
+        timeout = conf.get("timeout")
+        self.timeout = int(timeout) if timeout else None
+        self.auth = None
+        if conf.get("username"):
+            raw = f"{conf['username']}:{conf.get('password') or ''}".encode()
+            self.auth = "Basic " + base64.b64encode(raw).decode()
         explicit = conf.get("verify_ssl")
         if isinstance(explicit, bool):
             self.verify_ssl = explicit
@@ -457,6 +466,8 @@ def request_headers(request: web.Request, site: Site, ingress: bool) -> dict:
     if ingress:
         headers["Accept-Encoding"] = "identity"
     headers["Host"] = site.host
+    if site.auth:
+        headers["Authorization"] = site.auth
     return headers
 
 
@@ -539,6 +550,9 @@ async def proxy_request(
             data=body if body else None,
             allow_redirects=False,
             ssl=site.ssl_arg(),
+            **({"timeout": aiohttp.ClientTimeout(total=None, sock_connect=10,
+                                                 sock_read=site.timeout)}
+               if site.timeout else {}),
         )
     except Exception as err:  # noqa: BLE001
         LOG.warning("[%s] request failed: %s", site.name, err)
@@ -548,6 +562,7 @@ async def proxy_request(
         ctype = upstream.headers.get("Content-Type", "").split(";")[0].strip().lower()
         rewritable = (
             ingress
+            and site.rewrite
             and request.method != "HEAD"
             and upstream.status not in (204, 304)
             and (ctype in ("text/html", "text/css") or ctype in JS_TYPES)
@@ -700,7 +715,7 @@ async def start_ingress(sites: list[Site]) -> web.AppRunner:
 
     async def index(request: web.Request) -> web.Response:
         base = request.headers.get("X-Ingress-Path", "").rstrip("/")
-        data = [{"id": s.sid, "name": s.name} for s in sites]
+        data = [{"id": s.sid, "name": s.name} for s in sites if not s.hidden]
         # "<" is escaped so a site name can never close the script tag.
         page = (
             LAUNCHER.replace("__BASE__", json.dumps(base))
@@ -759,8 +774,12 @@ def load_sites() -> list[Site]:
             n += 1
             s.sid = f"{base}-{n}"
         seen.add(s.sid.lower())
-        LOG.info("Site %s -> %s  (address: proxy://%s, %s)",
-                 s.name, s.target, s.sid, s.verify_note)
+        extras = [x for x, on in (("hidden tab", s.hidden), ("no rewrite", not s.rewrite),
+                                  (f"timeout {s.timeout}s", s.timeout),
+                                  ("sign-in header", s.auth)) if on]
+        LOG.info("Site %s -> %s  (address: proxy://%s, %s%s)",
+                 s.name, s.target, s.sid, s.verify_note,
+                 ", " + ", ".join(extras) if extras else "")
     return sites
 
 

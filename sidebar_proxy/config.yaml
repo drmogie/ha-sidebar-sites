@@ -1,5 +1,5 @@
 name: Sidebar Proxy
-version: "2026.10.03.11"
+version: "2026.10.03.12"
 slug: sidebar_proxy
 description: Open any website, even on your home network, inside Home Assistant from one sidebar page
 url: https://github.com/drmogie/ha-sidebar-sites
@@ -24,3 +24,8 @@ schema:
     - name: str
       url: url
       verify_ssl: bool?
+      hidden: bool?
+      rewrite: bool?
+      timeout: int(5,3600)?
+      username: str?
+      password: password?

@@ -26,6 +26,10 @@ You do not need the Sidebar Sites integration. You do not need NPM hosts, domain
 - name: the tab name. It also makes the id.
 - url: the real website
 - verify_ssl: leave empty for auto. Set true or false to force it.
+- hidden: true hides the tab. The site still works with proxy://Site-Name.
+- rewrite: set false to send the page untouched. Use it if a site breaks.
+- timeout: seconds to wait for a slow site, from 5 to 3600.
+- username and password: sign in to the site for you with basic login. Use it only for sites that ask for a basic login box.
 - home_networks: extra address ranges to treat as home. Separate with commas or spaces. Example: 10.50.0.0/16, 203.0.113.0/24
 
 ## Certificates on home networks
