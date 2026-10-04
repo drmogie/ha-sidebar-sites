@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.14
+
+- Fix: the error page no longer calls an unreachable address a certificate problem.
+
 ## 2026.10.03.13
 
 - Fix: image lists (srcset) that hold an inline picture no longer break. This brings back the CasaOS logo.

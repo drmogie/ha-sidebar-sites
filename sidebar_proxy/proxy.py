@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.13"
+VERSION = "2026.10.03.14"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -111,13 +111,13 @@ def error_page(site, err) -> web.Response:
     """A readable page for when the proxy cannot reach a site."""
     text = str(err)
     low = text.lower()
-    if "certificate" in low or "ssl" in low:
+    if "certificate" in low or "sslcertverification" in low or "ssl handshake" in low:
         why = "The site's security certificate was not trusted."
         todo = ("Set verify_ssl to false for this site in the add-on settings, "
                 "or add its address range to home_networks. Then restart the add-on.")
-    elif "refused" in low:
-        why = "The site refused the connection."
-        todo = "Check that the site is running and that the port in the address is right."
+    elif "refused" in low or "connect call failed" in low or "unreachable" in low:
+        why = "Nothing answered at that address."
+        todo = "Check that the site is running, and that the address and port are right."
     elif isinstance(err, asyncio.TimeoutError) or "timed out" in low or "timeout" in low:
         why = "The site did not answer in time."
         todo = "Check the address, that the device is on, and that nothing blocks Home Assistant."
