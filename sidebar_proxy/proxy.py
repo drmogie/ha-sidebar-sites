@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.02"
+VERSION = "2026.10.04.03"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -142,7 +142,9 @@ def error_page(site, err) -> web.Response:
         f"<p>Address: <code>{html.escape(site.target)}</code></p>"
         f"<pre>{html.escape(text)}</pre>"
     )
-    return web.Response(status=502, text=page, content_type="text/html")
+    # Not a 5xx: Cloudflare (and some other front doors) replace the body of an
+    # origin 502 or 504 with their own "Bad gateway" page, hiding this one.
+    return web.Response(status=424, text=page, content_type="text/html")
 
 
 def make_id(name: str) -> str:

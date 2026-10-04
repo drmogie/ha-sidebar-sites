@@ -57,3 +57,8 @@ Add-on names like a0d7b954-nginxproxymanager work because this add-on shares the
 - The page is rewritten so links and requests keep working. Most sites work. Some may not.
 - The site runs on the same address as Home Assistant, like any add-on page. Only add sites you trust.
 - Changed the sites? Restart the add-on.
+
+## Add-on addresses and ports
+
+- Use the add-on's inside port, not the port it shows on the host.
+- Example: an add-on that lists 3001/tcp mapped to 3011 is reached at port 3001 here.

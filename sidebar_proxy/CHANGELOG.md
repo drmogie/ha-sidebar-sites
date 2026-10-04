@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.03
+
+- Fix: the error page now shows when the site is reached through Cloudflare. Before, Cloudflare replaced it with its own "Bad gateway" page.
+
 ## 2026.10.04.02
 
 - Fix: forms with an empty action (action="") now save inside the proxy. This fixes the white page on Save in WebVirtCloud.
