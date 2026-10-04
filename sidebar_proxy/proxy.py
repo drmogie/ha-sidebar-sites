@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.12"
+VERSION = "2026.10.03.13"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -376,8 +376,11 @@ SHIM = r"""
       var n;
       if (a === "style") { if (v.indexOf("url(") < 0) continue; n = fixCss(v); }
       else if (a === "srcset") {
-        n = v.split(",").map(function (p) {
-          var t = p.trim().split(/\s+/); t[0] = fix(t[0]); return t.join(" ");
+        // entries are split on ", " so a data: url keeps its own comma
+        n = v.split(/,\s+/).map(function (p) {
+          var t = p.trim().split(/\s+/);
+          if (!/^data:/i.test(t[0])) t[0] = fix(t[0]);
+          return t.join(" ");
         }).join(", ");
       } else n = fix(v);
       if (n !== v) { try { el.setAttribute(a, n); } catch (e) {} }

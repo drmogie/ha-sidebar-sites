@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.13
+
+- Fix: image lists (srcset) that hold an inline picture no longer break. This brings back the CasaOS logo.
+
 ## 2026.10.03.12
 
 - New site options: hidden, rewrite, timeout, username and password.
