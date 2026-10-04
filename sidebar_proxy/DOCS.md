@@ -29,7 +29,8 @@ You do not need the Sidebar Sites integration. You do not need NPM hosts, domain
 - hidden: true hides the tab. The site still works with proxy://Site-Name.
 - rewrite: set false to send the page untouched. Use it if a site breaks.
 - timeout: seconds to wait for a slow site, from 5 to 3600.
-- basic_login: user:password, to sign in to the site for you with a basic login box. Use it only for sites that ask for one. It is one plain box, so Chrome does not fill it in.
+- use_login: turn on to send the username and password below to the site (basic login). Off by default. When off, the two boxes are ignored.
+- username and password: the basic login for the site. Home Assistant always shows these boxes, and Chrome may fill them in. They are only used when use_login is on.
 - home_networks: extra address ranges to treat as home. Separate with commas or spaces. Example: 10.50.0.0/16, 203.0.113.0/24
 
 ## Certificates on home networks

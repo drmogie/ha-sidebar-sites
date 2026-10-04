@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.10.04.05
+
+- The username and password boxes are back, with a use_login switch. The proxy only signs in for you when the switch is on.
+- Home Assistant draws the settings form, so an add-on cannot hide or grey out the boxes.
+
 ## 2026.10.04.04
 
 - Fix: pages that open their live connection inside a background worker (the Chrome Browser add-on screen) now connect through the sidebar.
