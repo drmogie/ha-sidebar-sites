@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.03"
+VERSION = "2026.10.04.04"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -337,8 +337,71 @@ SHIM = r"""
       var r = u.slice(o.length);
       return o + ((r === P || r.indexOf(P + "/") === 0) ? r : P + r);
     }
+    var h = location.origin;
+    if (u.indexOf(h + "/") === 0) {
+      var q = u.slice(h.length);
+      return o + ((q === P || q.indexOf(P + "/") === 0) ? q : P + q);
+    }
     if (u.charAt(0) === "/" && u.indexOf("//") !== 0) return o + fix(u);
     return u;
+  }
+  // Workers start with a clean slate, so the fixes above would not reach a
+  // WebSocket or fetch made inside one (the Selkies remote desktop does this).
+  // Give each classic Worker a small preamble that applies the same fixes.
+  function workerPre(P) {
+    function fix(u) {
+      if (u.charAt(0) === "/" && u.indexOf("//") !== 0) {
+        return (u === P || u.indexOf(P + "/") === 0) ? u : P + u;
+      }
+      return u;
+    }
+    var h = location.origin, o = h.replace(/^http/, "ws");
+    function wsfix(u) {
+      u = String(u).replace(/^((?:https?|wss?):\/\/[^\/:?#]+):(?:443|80)(?=[\/?#]|$)/i, "$1");
+      var b = u.indexOf(o + "/") === 0 ? o : (u.indexOf(h + "/") === 0 ? h : "");
+      if (b) {
+        var r = u.slice(b.length);
+        return o + ((r === P || r.indexOf(P + "/") === 0) ? r : P + r);
+      }
+      if (u.charAt(0) === "/" && u.indexOf("//") !== 0) return o + fix(u);
+      return u;
+    }
+    var W = self.WebSocket;
+    if (W) {
+      self.WebSocket = function (u, pr) {
+        u = wsfix(u);
+        return pr === undefined ? new W(u) : new W(u, pr);
+      };
+      self.WebSocket.prototype = W.prototype;
+      ["CONNECTING", "OPEN", "CLOSING", "CLOSED"].forEach(function (k) { self.WebSocket[k] = W[k]; });
+    }
+    var F = self.fetch;
+    if (F) {
+      self.fetch = function (u, i) {
+        if (typeof u === "string") {
+          if (u.indexOf(h + "/") === 0) {
+            var r = u.slice(h.length);
+            u = h + ((r === P || r.indexOf(P + "/") === 0) ? r : P + r);
+          } else u = fix(u);
+        }
+        return F.call(this, u, i);
+      };
+    }
+  }
+  var WK = window.Worker;
+  if (WK) {
+    window.Worker = function (u, opt) {
+      try {
+        var s = String(u);
+        if (s.indexOf("blob:") === 0 && !(opt && opt.type === "module")) {
+          var pre = "(" + workerPre.toString() + ")(" + JSON.stringify(P) + ");\n"
+            + "importScripts(" + JSON.stringify(s) + ");";
+          u = URL.createObjectURL(new Blob([pre], { type: "text/javascript" }));
+        }
+      } catch (e) {}
+      return opt === undefined ? new WK(u) : new WK(u, opt);
+    };
+    window.Worker.prototype = WK.prototype;
   }
   var W = window.WebSocket;
   window.WebSocket = function (u, pr) {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.10.04.04
+
+- Fix: pages that open their live connection inside a background worker (the Chrome Browser add-on screen) now connect through the sidebar.
+- Live connections written as an https address now go through the sidebar too.
+
 ## 2026.10.04.03
 
 - Fix: the error page now shows when the site is reached through Cloudflare. Before, Cloudflare replaced it with its own "Bad gateway" page.
