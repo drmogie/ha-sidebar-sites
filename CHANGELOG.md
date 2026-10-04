@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.03.15
+
+- New "Go to site" button. It opens the real address of the site in a new tab, outside Home Assistant.
+
 ## 2026.10.03.14
 
 - Fix: the error page no longer calls an unreachable address a certificate problem.

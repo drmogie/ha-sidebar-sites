@@ -52,6 +52,7 @@ Add-on names like a0d7b954-nginxproxymanager work because this add-on shares the
 
 - The sidebar item is admin only.
 - Uses your Home Assistant login. Works over HTTPS and over HTTP.
+- The "Go to site" button opens the real address of the site, outside Home Assistant. Your computer must be able to reach that address.
 - The "New tab" button opens the site in its own tab. Keep Home Assistant open in another tab so your login stays valid.
 - The page is rewritten so links and requests keep working. Most sites work. Some may not.
 - The site runs on the same address as Home Assistant, like any add-on page. Only add sites you trust.

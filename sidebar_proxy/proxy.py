@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.03.14"
+VERSION = "2026.10.03.15"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -670,7 +670,8 @@ small{opacity:.7;padding:0 6px}
 </style></head><body>
 <div id="bar"><div id="tabs"></div>
 <div id="tools"><button id="reload" title="Reload this site">Reload</button>
-<button id="out" title="Open this site in a new tab">New tab</button></div>
+<button id="out" title="Open this site in a new tab, through Home Assistant">New tab</button>
+<button id="go" title="Open the real address of this site, outside Home Assistant">Go to site</button></div>
 <small>__VERSION__</small></div>
 <div id="empty" hidden>No sites yet. Add some in the add-on Configuration tab, then restart the add-on.</div>
 <iframe id="view" hidden
@@ -700,6 +701,7 @@ small{opacity:.7;padding:0 6px}
     tabs.appendChild(b);
   });
   document.getElementById("reload").onclick=function(){if(current)view.src=url(current);};
+  document.getElementById("go").onclick=function(){if(current&&current.url)window.open(current.url,"_blank","noopener");};
   document.getElementById("out").onclick=function(){if(current)window.open(url(current),"_blank");};
   var start=decodeURIComponent((location.hash||"").slice(1));
   if(!start){try{start=localStorage.getItem("sidebar-proxy-last")||"";}catch(e){}}
@@ -718,7 +720,7 @@ async def start_ingress(sites: list[Site]) -> web.AppRunner:
 
     async def index(request: web.Request) -> web.Response:
         base = request.headers.get("X-Ingress-Path", "").rstrip("/")
-        data = [{"id": s.sid, "name": s.name} for s in sites if not s.hidden]
+        data = [{"id": s.sid, "name": s.name, "url": s.target + "/"} for s in sites if not s.hidden]
         # "<" is escaped so a site name can never close the script tag.
         page = (
             LAUNCHER.replace("__BASE__", json.dumps(base))
