@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.07
+
+- Fix: a site added with http that answers with a redirect to https (the Chromium add-on) now works. The proxy switches to https by itself. Before, the redirect went to your browser and timed out.
+
 ## 2026.10.04.06
 
 - Fix: pages whose start-up script loads code with a relative import (import x from "./app/x.js") now load through the sidebar. This was the blank page with moving dots on the Chrome Browser add-on after login.

@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.06"
+VERSION = "2026.10.04.07"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -540,6 +540,14 @@ def request_headers(request: web.Request, site: Site, ingress: bool) -> dict:
 
 
 def rewrite_location(value: str, site: Site, prefix: str | None) -> str:
+    # The site answers an http address by sending us to https on the same host and
+    # port. Switch to https for good, so the redirect stays inside the sidebar.
+    https_origin = "https://" + site.host
+    if site.origin.startswith("http://") and (
+            value == https_origin or value.startswith(https_origin + "/")):
+        LOG.info("Site %s moved to https, now using %s", site.name, https_origin)
+        site.origin = https_origin
+        site.target = https_origin + site.base_path
     if value.startswith(site.origin):
         value = value[len(site.origin):] or "/"
         return (prefix + value) if prefix else value
