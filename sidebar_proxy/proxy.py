@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.08"
+VERSION = "2026.10.04.09"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -329,7 +329,10 @@ SHIM = r"""
   }
   try {
     var p = location.pathname;
-    if (p.indexOf(P) === 0) {
+    var named = false;
+    try { named = window.parent !== window && !!window.name && !!window.parent.__sbShim; } catch (e) {}
+    window.__sbShim = 1;
+    if (!named && p.indexOf(P) === 0) {
       history.replaceState(history.state, "", (p.slice(P.length) || "/") + location.search + location.hash);
     }
   } catch (e) {}

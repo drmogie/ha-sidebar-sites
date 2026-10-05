@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.09
+
+- Fixed: pages with named inner frames (Cockpit) kept reloading and showed no data. The proxy no longer rewrites the address inside named inner frames.
+
 ## 2026.10.04.08
 
 - Fix: pages with their own base address (Cockpit) now load their scripts and styles from the right place. This was the white page after the Cockpit login.
