@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 import aiohttp
 from aiohttp import web
 
-VERSION = "2026.10.04.07"
+VERSION = "2026.10.04.08"
 OPTIONS_FILE = "/data/options.json"
 STATUS_PORT = 8099
 MAX_SITES = 50
@@ -207,6 +207,7 @@ CSS_IMPORT_RE = re.compile(r"""(@import\s+)(["'])(.*?)\2""", re.I)
 SCRIPT_BLOCK_RE = re.compile(r"(<script\b.*?</script>)", re.I | re.S)
 DYN_IMPORT_RE = re.compile(r"""\bimport\s*\(\s*["']\.|\b(?:from|import)\s*["']\.""")
 HEAD_RE = re.compile(r"<head[^>]*>", re.I)
+BASE_RE = re.compile(r"""(<base\b[^>]*?\shref\s*=\s*)(["'])(.*?)\2""", re.I | re.S)
 CHARSET_RE = re.compile(r"charset=([\w\-]+)", re.I)
 
 
@@ -233,6 +234,23 @@ def fix_url(value: str, prefix: str, basedir: str, site: Site, relative: bool) -
 
 
 def rewrite_html(text: str, prefix: str, basedir: str, site: Site) -> str:
+    # A page with its own <base href> (Cockpit) resolves every relative link against
+    # that base, not against the page. Follow it, and put the proxy path in front.
+    has_base = False
+    bm = BASE_RE.search(text)
+    if bm:
+        raw = bm.group(3).strip()
+        if raw.startswith(site.origin):
+            raw = raw[len(site.origin):] or "/"
+        if not SCHEME_RE.match(raw) and not raw.startswith("//") and not raw.startswith("#"):
+            path = raw if raw.startswith("/") else basedir + raw
+            if not (path == prefix or path.startswith(prefix + "/")):
+                path = prefix + path
+            basedir = path[len(prefix):]
+            basedir = basedir[: basedir.rfind("/") + 1] or "/"
+            text = text[: bm.start(3)] + path + text[bm.end(3):]
+            has_base = True
+
     def attr(match: re.Match) -> str:
         new = fix_url(match.group(3), prefix, basedir, site, True)
         return f"{match.group(1)}{match.group(2)}{new}{match.group(2)}"
@@ -250,7 +268,7 @@ def rewrite_html(text: str, prefix: str, basedir: str, site: Site) -> str:
     shim = f"<script>{SHIM.replace('__PREFIX__', json.dumps(prefix))}</script>"
     # Scripts that load code with a relative import("./x.js") or import x from "./x.js" resolve it against the
     # page base, which the shim moved. A base tag keeps those imports under the proxy.
-    if DYN_IMPORT_RE.search(text):
+    if DYN_IMPORT_RE.search(text) and not has_base:
         shim = f'<base href="{prefix}{basedir}">' + shim
     if HEAD_RE.search(text):
         return HEAD_RE.sub(lambda m: m.group(0) + shim, text, count=1)
@@ -300,7 +318,7 @@ SHIM = r"""
     }
     if (u !== "" && u.charAt(0) !== "#" && !/^[a-z][a-z0-9+.\-]*:/i.test(u)) {
       try {
-        var q = new URL(u, location.href);
+        var q = new URL(u, document.baseURI);
         if (q.origin === o) {
           var h = q.pathname;
           return ((h === P || h.indexOf(P + "/") === 0) ? h : P + h) + q.search + q.hash;

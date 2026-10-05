@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.10.04.08
+
+- Fix: pages with their own base address (Cockpit) now load their scripts and styles from the right place. This was the white page after the Cockpit login.
+
 ## 2026.10.04.07
 
 - Fix: a site added with http that answers with a redirect to https (the Chromium add-on) now works. The proxy switches to https by itself. Before, the redirect went to your browser and timed out.

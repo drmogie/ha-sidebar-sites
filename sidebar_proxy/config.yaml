@@ -1,5 +1,5 @@
 name: Sidebar Proxy
-version: "2026.10.04.07"
+version: "2026.10.04.08"
 slug: sidebar_proxy
 description: Open any website, even on your home network, inside Home Assistant from one sidebar page
 url: https://github.com/drmogie/ha-sidebar-sites
