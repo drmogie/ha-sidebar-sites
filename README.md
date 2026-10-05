@@ -42,6 +42,17 @@ Every site is its own entry, with its own Configure and Delete.
 - Some sites (banks, Google sign-in) block frames on purpose and may still fail.
 - This is early. Test on a test server first.
 
+## Site login
+
+- Some sites use a basic login box. Turn on use_login for that site, then fill in username and password.
+- With use_login off, the add-on ignores both boxes.
+
+## Tested sites
+
+- Cockpit works, including its inner pages (fixed in 2026.10.04.09).
+- Chrome and Chromium add-ons work over https.
+- If a site sets its own base address or redirects http to https, the add-on follows it.
+
 ## Home networks and certificates
 
 - Sites on a home network address skip the certificate check by default.

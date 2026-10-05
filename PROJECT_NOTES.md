@@ -44,3 +44,14 @@
 - SHIM: forms with no action get one set to the proxy path (fixes OPNsense white page after login).
 - verify_ssl is auto when unset: off for home hosts (is_home_host + HOME_NETS), on otherwise. home_networks option adds ranges.
 - error_page() gives a styled 502. Session has sock_connect=10.
+
+## 2026.10.04.05 to .09
+
+- .05: use_login toggle with separate username and password boxes (replaces basic_login). Only on when use_login is true.
+- .06: inline module scripts with static relative imports get a base tag (fixes blank page with dots after login).
+- .07: http site that redirects to https on the same host switches scheme (rewrite_location).
+- .08: pages with their own base tag (Cockpit) are followed. Shim fix() resolves against document.baseURI.
+- .09: shim does not strip the ingress prefix inside named inner frames. Cockpit frames used to reload in a loop (double init, no data).
+- Cockpit facts: frames named cockpit1:..., talk to the shell with postMessage. Page address inside frames must match what Cockpit sets.
+- Debug tips: Chrome tool blocks output with cookie or query text, so strip those characters. Proxy log tail is about 100 lines.
+- Version format reminder: YYYY.MM.DD.## with two digits.
